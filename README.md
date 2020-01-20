@@ -1,3 +1,5 @@
+# jQuery plugin that allows to handle multidimensional selectbox
+
 Usage example:
 ```js
 $(document).ready(function () {
