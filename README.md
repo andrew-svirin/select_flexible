@@ -5,7 +5,8 @@ Select HTML:
 <select name="languages[]" 
     id="languages-select" 
     class="candidates-filter-form-select" 
-    multiple="multiple" data-label="Languages">
+    multiple="multiple" 
+    data-label="Languages">
         <option value="af][1" data-name="Afrikaans][Basic">
             Afrikaans Basic
         </option>
