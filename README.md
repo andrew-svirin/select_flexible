@@ -23,19 +23,21 @@ Select HTML:
 
 Usage example:
 ```js
-    let $select = $('#select');
+$(document).ready(function () {
+    let $select = $('#languages-select');
     $select.selectFlexible({
         dimension: 'multi', // or 'single'
         eventClickOption: function () {
             // hook.
         },
         eventSelectOptions: function ($results, toggle) {
-              // hook.
+            // hook.
         },
         eventClickResultOption: function () {
-              // hook.
+            // hook.
         },
     });
+});
 ```
 
 Select with display tags:
