@@ -1,5 +1,8 @@
 let SelectFlexible = function ($element, options) {
+    this.$body = $(document.body);
     if ($element.data('select-flexible') != null) {
+        this.$body.off('.select_flexible-' + this.id);
+        this.$container.off('.select_flexible');
         $element.data('select-flexible').$container.remove();
         $element.removeData('select-flexible');
     }
@@ -7,6 +10,8 @@ let SelectFlexible = function ($element, options) {
         multiple: false,
         dimension: 'single',
         eventClickOption: null,
+        eventSelectOptions: null,
+        eventClickResultOption: null,
     }, options);
     this.container = this.render();
     this.element = new SelectFlexibleElement(this.$container, this.options);
@@ -34,7 +39,8 @@ SelectFlexible.prototype.placeContainer = function () {
 
 SelectFlexible.prototype.render = function () {
     let $container = $(
-        '<span class="select-flexible select-flexible-container">' +
+        '<span class="select-flexible select-flexible-container"' +
+        ' data-id="' + this.id + '">' +
         '<span class="box-wrapper"></span>' +
         '<span class="dropdown-wrapper" aria-hidden="true"></span>' +
         '</span>'
@@ -44,71 +50,60 @@ SelectFlexible.prototype.render = function () {
 };
 
 SelectFlexible.prototype.registerEvents = function () {
-    this.$container.on('select_flexible:click_box select_flexible:click_box_arrow', () => {
-        let toggle = $('.select-flexible-box', this.$container).hasClass('open');
-        this.displayDropdown(!toggle);
-    }).on('select_flexible:input_search', (evt, pEvt) => {
-        this.dropdown.results.filter($(pEvt.currentTarget).val());
-    }).on('select_flexible:click_option', (evt, pEvt) => {
-        let $result = $(pEvt.currentTarget),
-            toggle = !$result.hasClass('highlighted'),
-            $option = this.element.getOptionsByValue($result.data('value'));
+    this.$container.on('click_box.select_flexible click_box_arrow.select_flexible', (evt, $element, toggle) => {
+        this.displayDropdown(toggle);
+    }).on('input_search.select_flexible', (evt, $search) => {
+        this.dropdown.results.filter($search.val());
+    }).on('click_option.select_flexible', (evt, $result, toggle) => {
+        let $option = this.element.getOptionsByValue($result.data('value'));
 
         this.dropdown.results.toggleSelectResults($result, toggle);
         this.element.toggleSelectOptions($option, toggle);
         this.triggerEvent('eventClickOption', $result, $option, toggle);
-    }).on('select_flexible:click_result_option', (evt, pEvt) => {
-        let $resultOption = $(pEvt.currentTarget),
-            toggle = !$resultOption.hasClass('highlighted'),
-            $option = this.element.getOptionByValue($resultOption.data('value'));
+    }).on('toggle_select_options.select_flexible', (evt, $results, toggle) => {
+        this.triggerEvent('eventSelectOptions', $results, toggle);
+    }).on('click_result_option.select_flexible', (evt, $resultOption, toggle) => {
+        let $option = this.element.getOptionByValue($resultOption.data('value'));
 
         this.dropdown.results.resultsOptions.toggleSelectResultsOptions($resultOption, toggle);
         this.element.toggleSelectOptions($option, toggle);
-        this.triggerEvent('eventClickResultOption', $resultOption, $option, toggle);
         // If was unselected last sub option, then unselect parent option.
         let resultValue = $option.val().split('][')[0],
             $result = this.dropdown.results.getResultByValue(resultValue);
-        console.log('options', this.dropdown.results.resultsOptions.getSelectedResultOptions($result));
         if (0 === this.dropdown.results.resultsOptions.getSelectedResultOptions($result).length) {
-            $result.trigger('click');
+            $result.trigger('click.select_flexible');
         }
-    }).on('close', () => {
+        this.triggerEvent('eventClickResultOption', $resultOption, $option, toggle);
+    }).on('close.select_flexible', () => {
         this.displayDropdown(false);
-    });
-
-    $(document.body).on('mousedown', (evt) => {
-        this.$container.trigger('select_flexible:mousedown:' + this.id, [evt]);
-    }).on('keydown', (evt) => {
-        this.$container.trigger('select_flexible:keydown:' + this.id, [evt]);
     });
 };
 
 SelectFlexible.prototype.displayDropdown = function (toggle) {
     $('.select-flexible-box', this.$container).toggleClass('open', toggle);
-    let $body = $(document.body);
     if (toggle) {
         // Place dropdown.
         this.dropdown = new SelectFlexibleDropdown(this.$container, this.options);
-        $body.append(this.dropdown.render());
+        this.$body.append(this.dropdown.render(this.id));
         this.$container.data('$search').focus();
         this.setSelected(this.element.getSelectedOptionsValues());
 
-        $body.on('select_flexible:mousedown:' + this.id, (evt, pEvt) => {
+        this.$body.on('mousedown.select_flexible-' + this.id, (evt) => {
             // Check if click was inside current container.
-            let $target = $(pEvt.target);
+            let $target = $(evt.target);
             if (!$target.closest(this.$container).length &&
                 !$target.closest(this.$container.data('$dropdown')).length) {
-                this.$container.trigger('close');
+                this.$container.trigger('close.select_flexible');
             }
-        }).on('select_flexible:keydown:' + this.id, (evt, pEvt) => {
+        }).on('keydown.select_flexible-' + this.id, (evt) => {
             // On press escape - close the dropdown.
-            if ('Escape' === pEvt.key) {
-                this.$container.trigger('close');
+            if ('Escape' === evt.key) {
+                this.$container.trigger('close.select_flexible');
             }
         });
     } else {
-        $body.off('select_flexible:mousedown:' + this.id)
-            .off('select_flexible:keydown:' + this.id);
+        this.$body.off('mousedown.select_flexible-' + this.id)
+            .off('keydown.select_flexible-' + this.id);
 
         this.$container.data('$dropdown').remove();
         this.$container.removeData('$dropdown').removeData('$search').removeData('$results');
@@ -151,8 +146,11 @@ SelectFlexibleBox.prototype.resolveLabel = function () {
 };
 
 SelectFlexibleBox.prototype.registerEvents = function () {
-    this.$container.data('$box').on('click', (evt) => {
-        this.$container.trigger('select_flexible:click_box', [evt]);
+    this.$container.data('$box').on('click.select_flexible', (evt) => {
+        this.$container.trigger('click_box.select_flexible', [
+            $(evt.currentTarget),
+            !$('.select-flexible-box', this.$container).hasClass('open'),
+        ]);
     });
 };
 function SelectFlexibleBoxArrow($container, options) {
@@ -171,9 +169,12 @@ SelectFlexibleBoxArrow.prototype.render = function () {
 };
 
 SelectFlexibleBoxArrow.prototype.registerEvents = function () {
-    this.$container.data('$boxArrow').on('click', (evt) => {
+    this.$container.data('$boxArrow').on('click.select_flexible', (evt) => {
         evt.stopPropagation();
-        this.$container.trigger('select_flexible:click_box_arrow', [evt]);
+        this.$container.trigger('click_box_arrow.select_flexible', [
+            $(evt.currentTarget),
+            !$('.select-flexible-box', this.$container).hasClass('open'),
+        ]);
     });
 };
 function SelectFlexibleDropdown($container, options) {
@@ -183,11 +184,12 @@ function SelectFlexibleDropdown($container, options) {
     this.results = new SelectFlexibleResults(this.$container, this.options);
 }
 
-SelectFlexibleDropdown.prototype.render = function () {
+SelectFlexibleDropdown.prototype.render = function (id) {
     let $dropdown = $(
-        '<span class="select-flexible-container">' +
+        '<span class="select-flexible-container"' +
+        ' data-container-id="' + id + '">' +
         '<span class="select-flexible-dropdown">' +
-        '<span class="select-flexible-results"></span>' +
+        '<span class="select-flexible-results ' + this.options.dimension + '"></span>' +
         '</span>' +
         '</span>'
     );
@@ -331,7 +333,7 @@ function SelectFlexibleResults($container, options) {
 
 SelectFlexibleResults.prototype.render = function () {
     let $results = $(
-        '<ul class="select-flexible-results" role="tree"></ul>'
+        '<ul class="select-flexible-results-container" role="tree"></ul>'
     );
     this.$container.data('$results', $results);
 
@@ -368,8 +370,9 @@ SelectFlexibleResults.prototype.renderResult = function (value, optionValue) {
 };
 
 SelectFlexibleResults.prototype.registerEvents = function () {
-    $('li.select-flexible-result', this.$container.data('$results')).on('click', (evt) => {
-        this.$container.trigger('select_flexible:click_option', [evt]);
+    $('li.select-flexible-result', this.$container.data('$results')).on('click.select_flexible', (evt) => {
+        let $result = $(evt.currentTarget);
+        this.$container.trigger('click_option.select_flexible', [$result, !$result.hasClass('highlighted')]);
     });
 };
 
@@ -425,6 +428,7 @@ SelectFlexibleResults.prototype.toggleSelectResults = function ($results, toggle
             });
         }
     }
+    this.$container.trigger('toggle_select_options.select_flexible', [$results, toggle])
 };
 
 SelectFlexibleResults.prototype.getSelectedResults = function () {
@@ -478,9 +482,10 @@ SelectFlexibleResultsOptions.prototype.getResultOptions = function ($resultOptio
 };
 
 SelectFlexibleResultsOptions.prototype.registerEvents = function ($resultOptions) {
-    $resultOptions.on('click', (evt) => {
+    $resultOptions.on('click.select_flexible', (evt) => {
         evt.stopPropagation();
-        this.$container.trigger('select_flexible:click_result_option', [evt]);
+        let $resultOption = $(evt.currentTarget);
+        this.$container.trigger('click_result_option.select_flexible', [$resultOption, !$resultOption.hasClass('highlighted')]);
     });
 };
 
@@ -532,9 +537,9 @@ SelectFlexibleSearch.prototype.render = function () {
 };
 
 SelectFlexibleSearch.prototype.registerEvents = function () {
-    this.$container.data('$search').on('input', (evt) => {
+    this.$container.data('$search').on('input.select_flexible', (evt) => {
         evt.stopPropagation();
-        this.$container.trigger('select_flexible:input_search', [evt]);
+        this.$container.trigger('input_search.select_flexible', [$(evt.currentTarget)]);
     });
 };
 (function ($) {
@@ -545,7 +550,18 @@ SelectFlexibleSearch.prototype.registerEvents = function () {
             if ('string' === typeof options) {
                 switch (options) {
                     case 'values':
+                        // Argument 1 - values
                         $(this).data('select-flexible').setSelected(arguments_array[1]);
+                        break;
+                    case 'selectResultOptions':
+                        // Argument 1 - $resultOptions
+                        // Argument 2 - toggle
+                        arguments_array[1].each((id, resultOption) => {
+                            $(this).data('select-flexible').$container.trigger('click_result_option.select_flexible', [
+                                $(resultOption),
+                                arguments_array[2],
+                            ]);
+                        });
                         break;
                     default:
                         console.error('Method does not allowed', options);

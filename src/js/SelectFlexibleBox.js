@@ -22,7 +22,10 @@ SelectFlexibleBox.prototype.resolveLabel = function () {
 };
 
 SelectFlexibleBox.prototype.registerEvents = function () {
-    this.$container.data('$box').on('click', (evt) => {
-        this.$container.trigger('select_flexible:click_box', [evt]);
+    this.$container.data('$box').on('click.select_flexible', (evt) => {
+        this.$container.trigger('click_box.select_flexible', [
+            $(evt.currentTarget),
+            !$('.select-flexible-box', this.$container).hasClass('open'),
+        ]);
     });
 };

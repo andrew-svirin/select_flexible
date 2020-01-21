@@ -28,9 +28,10 @@ SelectFlexibleResultsOptions.prototype.getResultOptions = function ($resultOptio
 };
 
 SelectFlexibleResultsOptions.prototype.registerEvents = function ($resultOptions) {
-    $resultOptions.on('click', (evt) => {
+    $resultOptions.on('click.select_flexible', (evt) => {
         evt.stopPropagation();
-        this.$container.trigger('select_flexible:click_result_option', [evt]);
+        let $resultOption = $(evt.currentTarget);
+        this.$container.trigger('click_result_option.select_flexible', [$resultOption, !$resultOption.hasClass('highlighted')]);
     });
 };
 

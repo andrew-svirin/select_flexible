@@ -5,11 +5,12 @@ function SelectFlexibleDropdown($container, options) {
     this.results = new SelectFlexibleResults(this.$container, this.options);
 }
 
-SelectFlexibleDropdown.prototype.render = function () {
+SelectFlexibleDropdown.prototype.render = function (id) {
     let $dropdown = $(
-        '<span class="select-flexible-container">' +
+        '<span class="select-flexible-container"' +
+        ' data-container-id="' + id + '">' +
         '<span class="select-flexible-dropdown">' +
-        '<span class="select-flexible-results"></span>' +
+        '<span class="select-flexible-results ' + this.options.dimension + '"></span>' +
         '</span>' +
         '</span>'
     );

@@ -8,7 +8,7 @@ function SelectFlexibleResults($container, options) {
 
 SelectFlexibleResults.prototype.render = function () {
     let $results = $(
-        '<ul class="select-flexible-results" role="tree"></ul>'
+        '<ul class="select-flexible-results-container" role="tree"></ul>'
     );
     this.$container.data('$results', $results);
 
@@ -45,8 +45,9 @@ SelectFlexibleResults.prototype.renderResult = function (value, optionValue) {
 };
 
 SelectFlexibleResults.prototype.registerEvents = function () {
-    $('li.select-flexible-result', this.$container.data('$results')).on('click', (evt) => {
-        this.$container.trigger('select_flexible:click_option', [evt]);
+    $('li.select-flexible-result', this.$container.data('$results')).on('click.select_flexible', (evt) => {
+        let $result = $(evt.currentTarget);
+        this.$container.trigger('click_option.select_flexible', [$result, !$result.hasClass('highlighted')]);
     });
 };
 
@@ -102,6 +103,7 @@ SelectFlexibleResults.prototype.toggleSelectResults = function ($results, toggle
             });
         }
     }
+    this.$container.trigger('toggle_select_options.select_flexible', [$results, toggle])
 };
 
 SelectFlexibleResults.prototype.getSelectedResults = function () {

@@ -17,8 +17,8 @@ SelectFlexibleSearch.prototype.render = function () {
 };
 
 SelectFlexibleSearch.prototype.registerEvents = function () {
-    this.$container.data('$search').on('input', (evt) => {
+    this.$container.data('$search').on('input.select_flexible', (evt) => {
         evt.stopPropagation();
-        this.$container.trigger('select_flexible:input_search', [evt]);
+        this.$container.trigger('input_search.select_flexible', [$(evt.currentTarget)]);
     });
 };
