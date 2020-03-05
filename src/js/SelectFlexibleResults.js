@@ -17,6 +17,10 @@ SelectFlexibleResults.prototype.render = function () {
     }
 
     $.each(this.$container.data('options-values'), (key, value) => {
+        // Ignore default option for rendering.
+        if ('' === key) {
+            return;
+        }
         $results.append(this.renderResult(key, value));
     });
 
@@ -83,7 +87,13 @@ SelectFlexibleResults.prototype.getResultByValue = function (value) {
 };
 
 SelectFlexibleResults.prototype.toggleSelectResults = function ($results, toggle) {
+    if (0 === $results.length) {
+        return;
+    }
     $results.toggleClass('highlighted', toggle);
+    if (!this.options.multiple && toggle) {
+        this.$container.data('$results').find('li').not($results).toggleClass('highlighted', !toggle);
+    }
     if ('multi' === this.options.dimension) {
         if (toggle) {
             // Show sub-select.

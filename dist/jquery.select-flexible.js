@@ -24,7 +24,7 @@ let SelectFlexible = function ($element, options) {
 SelectFlexible.prototype.triggerEvent = function () {
     let arguments_array = Array.from(arguments);
     let fn = this.options[arguments_array.shift()];
-    if (typeof fn === "function") {
+    if (typeof fn === 'function') {
         fn.apply(null, arguments_array);
     }
 };
@@ -56,7 +56,6 @@ SelectFlexible.prototype.registerEvents = function () {
         this.dropdown.results.filter($search.val());
     }).on('click_option.select_flexible', (evt, $result, toggle) => {
         let $option = this.element.getOptionsByValue($result.data('value'));
-
         this.dropdown.results.toggleSelectResults($result, toggle);
         this.element.toggleSelectOptions($option, toggle);
         this.triggerEvent('eventClickOption', $result, $option, toggle);
@@ -277,6 +276,9 @@ SelectFlexibleElement.prototype.setSelectedOptions = function (values) {
 
 SelectFlexibleElement.prototype.toggleSelectOptions = function ($options, toggle) {
     $options.prop('selected', toggle);
+    if (!this.options.multiple && toggle) {
+        this.$container.data('$element').find('option').not($options).prop('selected', !toggle);
+    }
 };
 
 SelectFlexibleElement.prototype.getOptionsValues = function ($option) {
@@ -342,6 +344,10 @@ SelectFlexibleResults.prototype.render = function () {
     }
 
     $.each(this.$container.data('options-values'), (key, value) => {
+        // Ignore default option for rendering.
+        if ('' === key) {
+            return;
+        }
         $results.append(this.renderResult(key, value));
     });
 
@@ -408,7 +414,13 @@ SelectFlexibleResults.prototype.getResultByValue = function (value) {
 };
 
 SelectFlexibleResults.prototype.toggleSelectResults = function ($results, toggle) {
+    if (0 === $results.length) {
+        return;
+    }
     $results.toggleClass('highlighted', toggle);
+    if (!this.options.multiple && toggle) {
+        this.$container.data('$results').find('li').not($results).toggleClass('highlighted', !toggle);
+    }
     if ('multi' === this.options.dimension) {
         if (toggle) {
             // Show sub-select.
@@ -547,17 +559,18 @@ SelectFlexibleSearch.prototype.registerEvents = function () {
         let arguments_array = Array.from(arguments);
         let $this = $(this);
         $this.each(function () {
+            let $select = $(this);
             if ('string' === typeof options) {
                 switch (options) {
                     case 'values':
                         // Argument 1 - values
-                        $(this).data('select-flexible').setSelected(arguments_array[1]);
+                        $select.data('select-flexible').setSelected(arguments_array[1]);
                         break;
                     case 'selectResultOptions':
                         // Argument 1 - $resultOptions
                         // Argument 2 - toggle
                         arguments_array[1].each((id, resultOption) => {
-                            $(this).data('select-flexible').$container.trigger('click_result_option.select_flexible', [
+                            $select.data('select-flexible').$container.trigger('click_result_option.select_flexible', [
                                 $(resultOption),
                                 arguments_array[2],
                             ]);
@@ -567,7 +580,10 @@ SelectFlexibleSearch.prototype.registerEvents = function () {
                         console.error('Method does not allowed', options);
                 }
             } else {
-                new SelectFlexible($(this), options);
+                // Check if select has attribute multiple and set default.
+                options.multiple = options.multiple ||
+                    (options.multiple === undefined && typeof $select.attr('multiple') !== 'undefined');
+                new SelectFlexible($select, options);
             }
         });
         return $this;

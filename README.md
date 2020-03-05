@@ -191,5 +191,6 @@ $(document).ready(function () {
 
 Build dest files:
 ```
-gulp --gulpfile public/vendors/select_flexible/gulpfile.js
+gulp --gulpfile public/vendors/select_flexible/gulpfile.js &&
+gulp minify --gulpfile public/vendors/select_flexible/gulpfile.js
 ```

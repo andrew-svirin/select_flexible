@@ -24,7 +24,7 @@ let SelectFlexible = function ($element, options) {
 SelectFlexible.prototype.triggerEvent = function () {
     let arguments_array = Array.from(arguments);
     let fn = this.options[arguments_array.shift()];
-    if (typeof fn === "function") {
+    if (typeof fn === 'function') {
         fn.apply(null, arguments_array);
     }
 };
@@ -56,7 +56,6 @@ SelectFlexible.prototype.registerEvents = function () {
         this.dropdown.results.filter($search.val());
     }).on('click_option.select_flexible', (evt, $result, toggle) => {
         let $option = this.element.getOptionsByValue($result.data('value'));
-
         this.dropdown.results.toggleSelectResults($result, toggle);
         this.element.toggleSelectOptions($option, toggle);
         this.triggerEvent('eventClickOption', $result, $option, toggle);

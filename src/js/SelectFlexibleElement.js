@@ -60,6 +60,9 @@ SelectFlexibleElement.prototype.setSelectedOptions = function (values) {
 
 SelectFlexibleElement.prototype.toggleSelectOptions = function ($options, toggle) {
     $options.prop('selected', toggle);
+    if (!this.options.multiple && toggle) {
+        this.$container.data('$element').find('option').not($options).prop('selected', !toggle);
+    }
 };
 
 SelectFlexibleElement.prototype.getOptionsValues = function ($option) {
